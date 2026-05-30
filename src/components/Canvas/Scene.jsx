@@ -40,9 +40,9 @@ export default function Scene() {
     <>
       <PerspectiveCamera position={[0, 0, 80]} fov={60} makeDefault />
       <StarField />
-      {layoutStars.length > 0 && <LightTrail />}
+      {layoutStars.length > 0 && <LightTrail stars={layoutStars} />}
       {layoutStars.length > 0 && <EndpointStar stars={layoutStars} />}
-      {constellations.length > 0 && <Constellation />}
+      {constellations.length > 0 && <Constellation stars={layoutStars} />}
     </>
   );
 }

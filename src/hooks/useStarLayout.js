@@ -48,9 +48,12 @@ export function useStarLayout(stars) {
     }
   });
 
+  // Scale the charge force down for very large graphs to prevent explosions
+  const chargeStrength = stars.length > 200 ? -20 : -80;
+
   // Create the D3 force simulation
   const simulation = forceSimulation(nodes)
-    .force('charge', forceManyBody().strength(-80))
+    .force('charge', forceManyBody().strength(chargeStrength))
     .force(
       'link',
       forceLink(links)
@@ -59,7 +62,7 @@ export function useStarLayout(stars) {
         .strength(0.3)
     )
     .force('center', forceCenter(0, 0))
-    .force('collide', forceCollide().radius(d => d.star.size * 3));
+    .force('collide', forceCollide().radius(d => (d.star.size || 1) * 3));
 
   // Run the simulation for a fixed number of ticks
   for (let i = 0; i < 300; i++) {
@@ -78,6 +81,12 @@ export function useStarLayout(stars) {
       z: (Math.random() - 0.5) * 4, // Add some depth variation ±2
     };
   });
+
+  // DEBUG check for NaNs
+  const nanStars = positionedStars.filter(s => isNaN(s.x) || isNaN(s.y));
+  if (nanStars.length > 0) {
+    console.error('D3 simulation produced NaN for', nanStars.length, 'stars!', nanStars[0]);
+  }
 
   return positionedStars;
 }

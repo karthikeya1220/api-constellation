@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useMemo } from 'react';
 
 export const useConstellationStore = create(set => ({
   // Data
@@ -62,26 +63,30 @@ export const useFilteredStars = () => {
   const activeMethodFilters = useConstellationStore(s => s.activeMethodFilters);
   const searchQuery = useConstellationStore(s => s.searchQuery);
 
-  return stars.filter(star => {
-    // Filter by method
-    if (!activeMethodFilters.has(star.method)) {
-      return false;
-    }
-
-    // Filter by search query
-    if (searchQuery.trim() !== '') {
-      const query = searchQuery.toLowerCase();
-      const matchPath = star.path.toLowerCase().includes(query);
-      const matchSummary = (star.summary || '').toLowerCase().includes(query);
-      const matchDescription = (star.description || '').toLowerCase().includes(query);
-      const matchMethod = star.method.toLowerCase().includes(query);
-
-      if (!matchPath && !matchSummary && !matchDescription && !matchMethod) {
+  // useMemo requires importing it, but since this is a hook we can just use React.useMemo
+  // Wait, we need to import useMemo from 'react' at the top of the file
+  return useMemo(() => {
+    return stars.filter(star => {
+      // Filter by method
+      if (!activeMethodFilters.has(star.method)) {
         return false;
       }
-    }
 
-    return true;
-  });
+      // Filter by search query
+      if (searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase();
+        const matchPath = star.path.toLowerCase().includes(query);
+        const matchSummary = (star.summary || '').toLowerCase().includes(query);
+        const matchDescription = (star.description || '').toLowerCase().includes(query);
+        const matchMethod = star.method.toLowerCase().includes(query);
+
+        if (!matchPath && !matchSummary && !matchDescription && !matchMethod) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [stars, activeMethodFilters, searchQuery]);
 };
 

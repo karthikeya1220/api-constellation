@@ -13,8 +13,7 @@ void main() {
 }
 `;
 
-export default function LightTrail() {
-  const stars = useConstellationStore(s => s.stars);
+export default function LightTrail({ stars }) {
   const meshRefs = useRef([]);
 
   // Generate trails between related endpoints
@@ -35,53 +34,46 @@ export default function LightTrail() {
     });
 
     // Create trails within each constellation
-    constellationMap.forEach((groupStars, groupId) => {
+    constellationMap.forEach((groupStars) => {
       if (groupStars.length < 2) return;
 
-      // Sort by method (POST→GET flows indicate typical REST patterns)
-      const sorted = [...groupStars].sort((a, b) => {
-        const orderA = METHOD_ORDER[a.method] || 8;
-        const orderB = METHOD_ORDER[b.method] || 8;
-        return orderA - orderB;
-      });
+      const posts = groupStars.filter(s => s.method === 'POST');
+      const gets = groupStars.filter(s => s.method === 'GET');
 
-      // Create trails between consecutive stars
-      for (let i = 0; i < sorted.length - 1; i++) {
-        const from = sorted[i];
-        const to = sorted[i + 1];
+      posts.forEach(postStar => {
+        gets.forEach(getStar => {
+          // Check if GET is a sub-resource of POST (e.g., POST /pets -> GET /pets/{id})
+          if (getStar.path.startsWith(postStar.path) && getStar.id !== postStar.id) {
+            // Create bezier curve through control point
+            const start = new Vector3(postStar.x, postStar.y, postStar.z);
+            const end = new Vector3(getStar.x, getStar.y, getStar.z);
+            const mid = new Vector3(
+              (postStar.x + getStar.x) / 2,
+              (postStar.y + getStar.y) / 2,
+              (postStar.z + getStar.z) / 2 + 5 // Curve above the plane
+            );
 
-        // Skip if same endpoint
-        if (from.id === to.id) continue;
+            const curve = new QuadraticBezierCurve3(start, mid, end);
+            
+            // Thin tubes (radius 0.05) instead of thick pipes (0.3)
+            const tubeGeo = new TubeGeometry(curve, 20, 0.05, 8, false);
 
-        // Create bezier curve through control point
-        const start = new Vector3(from.x, from.y, from.z);
-        const end = new Vector3(to.x, to.y, to.z);
-        const mid = new Vector3(
-          (from.x + to.x) / 2,
-          (from.y + to.y) / 2,
-          (from.z + to.z) / 2 + 5 // Curve above the plane
-        );
+            // Color based on origin star method
+            const colorHex = postStar.color;
+            const r = parseInt(colorHex.slice(1, 3), 16) / 255;
+            const g = parseInt(colorHex.slice(3, 5), 16) / 255;
+            const b = parseInt(colorHex.slice(5, 7), 16) / 255;
 
-        const curve = new QuadraticBezierCurve3(start, mid, end);
-        const points = curve.getPoints(16);
-
-        // Create tube geometry
-        const tubeGeo = new TubeGeometry(curve, 16, 0.3, 4, false);
-
-        // Color based on origin star method
-        const colorHex = from.color;
-        const r = parseInt(colorHex.slice(1, 3), 16) / 255;
-        const g = parseInt(colorHex.slice(3, 5), 16) / 255;
-        const b = parseInt(colorHex.slice(5, 7), 16) / 255;
-
-        trailArray.push({
-          id: `${from.id}->${to.id}`,
-          geometry: tubeGeo,
-          color: { r, g, b },
-          from,
-          to,
+            trailArray.push({
+              id: `${postStar.id}->${getStar.id}`,
+              geometry: tubeGeo,
+              color: { r, g, b },
+              from: postStar,
+              to: getStar,
+            });
+          }
         });
-      }
+      });
     });
 
     return trailArray;

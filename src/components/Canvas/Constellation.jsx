@@ -1,11 +1,10 @@
 import { useMemo, useEffect, useState } from 'react';
-import { BufferGeometry, Float32BufferAttribute, LineBasicMaterial } from 'three';
+import { BufferGeometry, Float32BufferAttribute, LineBasicMaterial, AdditiveBlending } from 'three';
 import { Text } from '@react-three/drei';
 import { useConstellationStore, useFilteredStars } from '../../store';
 
-export default function Constellation() {
+export default function Constellation({ stars }) {
   const constellations = useConstellationStore(s => s.constellations);
-  const stars = useConstellationStore(s => s.stars);
   const filteredStars = useFilteredStars();
 
   // Create set of filtered star IDs for O(1) lookup
@@ -25,9 +24,35 @@ export default function Constellation() {
 
       if (groupStars.length < 2) return null;
 
-      // Create line segments between consecutive stars
-      const positions = new Float32Array(groupStars.length * 3);
-      groupStars.forEach((star, i) => {
+      // Create line segments to form realistic constellations
+      // Instead of sequential order, connect each star to its 2 nearest neighbors
+      const edges = new Set();
+      const segments = [];
+
+      groupStars.forEach(starA => {
+        // Find nearest neighbors
+        const neighbors = groupStars
+          .filter(starB => starB.id !== starA.id)
+          .map(starB => {
+            const dist = Math.pow(starA.x - starB.x, 2) + 
+                         Math.pow(starA.y - starB.y, 2) + 
+                         Math.pow(starA.z - starB.z, 2);
+            return { starB, dist };
+          })
+          .sort((a, b) => a.dist - b.dist)
+          .slice(0, 2); // Connect to up to 2 nearest stars
+
+        neighbors.forEach(({ starB }) => {
+          const edgeKey = starA.id < starB.id ? `${starA.id}-${starB.id}` : `${starB.id}-${starA.id}`;
+          if (!edges.has(edgeKey)) {
+            edges.add(edgeKey);
+            segments.push(starA, starB);
+          }
+        });
+      });
+
+      const positions = new Float32Array(segments.length * 3);
+      segments.forEach((star, i) => {
         positions[i * 3] = star.x;
         positions[i * 3 + 1] = star.y;
         positions[i * 3 + 2] = star.z;
@@ -46,8 +71,9 @@ export default function Constellation() {
         color: (r << 16) | (g << 8) | b,
         linewidth: 1,
         transparent: true,
-        opacity: 0.25,
+        opacity: 0.15, // Faint glow
         depthWrite: false,
+        blending: AdditiveBlending, // Makes overlapping lines glow like stars
       });
 
       return {
@@ -74,7 +100,7 @@ export default function Constellation() {
   // Update material opacity directly to avoid re-rendering meshes when not needed
   useEffect(() => {
     constellationGeometries.forEach(line => {
-      line.material.opacity = visibleMap[line.id] ? 0.25 : 0.05;
+      line.material.opacity = visibleMap[line.id] ? 0.15 : 0.02;
       line.material.needsUpdate = true;
     });
   }, [constellationGeometries, visibleMap]);
