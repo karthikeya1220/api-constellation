@@ -53,7 +53,8 @@ export default function DropZone() {
     }
   };
 
-  const handleLoadPetstore = async () => {
+  const handleLoadPetstore = async (e) => {
+    e.stopPropagation();
     try {
       const response = await fetch('/sample-specs/petstore.json');
       if (!response.ok) throw new Error('Failed to load petstore');
@@ -62,6 +63,19 @@ export default function DropZone() {
     } catch (err) {
       console.error('Error loading petstore:', err);
       alert(`Error loading petstore: ${err.message}`);
+    }
+  };
+
+  const handleLoadGithub = async (e) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch('/sample-specs/github-api.json');
+      if (!response.ok) throw new Error('Failed to load GitHub API spec');
+      const json = await response.json();
+      await parseAndLoad(json);
+    } catch (err) {
+      console.error('Error loading GitHub API:', err);
+      alert(`Error loading GitHub API: ${err.message}`);
     }
   };
 
@@ -83,9 +97,12 @@ export default function DropZone() {
           <p>Drag and drop an OpenAPI/Swagger JSON file here</p>
           <p className="secondary">or click to select a file</p>
 
-          <div className="button-group">
+          <div className="button-group" style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
             <button onClick={handleLoadPetstore} className="btn btn-secondary">
               Load Petstore Sample
+            </button>
+            <button onClick={handleLoadGithub} className="btn btn-secondary">
+              Load GitHub Sample
             </button>
           </div>
         </div>

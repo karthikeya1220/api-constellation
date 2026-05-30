@@ -6,11 +6,14 @@ import Constellation from './Constellation';
 import LightTrail from './LightTrail';
 import { useConstellationStore } from '../../store';
 import { useStarLayout } from '../../hooks/useStarLayout';
+import { useCamera } from '../../hooks/useCamera';
 
 export default function Scene() {
   const stars = useConstellationStore(s => s.stars);
   const constellations = useConstellationStore(s => s.constellations);
   
+  useCamera();
+
   // Compute layout once when stars change
   const layoutStars = useMemo(() => {
     if (stars.length === 0) return [];

@@ -7,7 +7,9 @@ import SearchBar from './components/UI/SearchBar';
 import FilterBar from './components/Controls/FilterBar';
 import LoadingNebula from './components/UI/LoadingNebula';
 import Legend from './components/UI/Legend';
+import ZoomControls from './components/Controls/ZoomControls';
 import { useConstellationStore } from './store';
+import { handlePointerDown, handlePointerMove, handlePointerUp, handleWheel, resetCamera } from './hooks/useCamera';
 import './styles/global.css';
 
 export default function App() {
@@ -33,8 +35,7 @@ export default function App() {
       // R: reset camera
       if (e.key === 'r' || e.key === 'R') {
         if (e.target === document.body) {
-          // TODO: implement camera reset when useCamera hook is added
-          // resetCamera();
+          resetCamera();
         }
       }
     };
@@ -45,7 +46,13 @@ export default function App() {
 
   return (
     <>
-      <Canvas>
+      <Canvas
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onWheel={handleWheel}
+      >
         <color attach="background" args={[0, 0, 0]} />
         <Scene />
       </Canvas>
@@ -55,6 +62,7 @@ export default function App() {
       <StarPanel />
       <LoadingNebula />
       <Legend />
+      <ZoomControls />
     </>
   );
 }
