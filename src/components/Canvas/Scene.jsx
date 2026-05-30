@@ -3,6 +3,7 @@ import { PerspectiveCamera } from '@react-three/drei';
 import StarField from './StarField';
 import EndpointStar from './EndpointStar';
 import Constellation from './Constellation';
+import LightTrail from './LightTrail';
 import { useConstellationStore } from '../../store';
 import { useStarLayout } from '../../hooks/useStarLayout';
 
@@ -36,10 +37,12 @@ export default function Scene() {
     <>
       <PerspectiveCamera position={[0, 0, 80]} fov={60} makeDefault />
       <StarField />
+      {layoutStars.length > 0 && <LightTrail />}
       {layoutStars.length > 0 && <EndpointStar stars={layoutStars} />}
       {constellations.length > 0 && <Constellation />}
     </>
   );
 }
+
 
 
