@@ -4,11 +4,22 @@ import { useFrame } from '@react-three/fiber';
 import starVert from '../../shaders/star.vert?raw';
 import starFrag from '../../shaders/star.frag?raw';
 import { useConstellationStore } from '../../store';
+import { useStarInteraction } from '../../hooks/useStarInteraction';
 
 export default function EndpointStar({ stars }) {
   const materialRef = useRef(null);
+  const pointsRef = useRef(null);
   const hoveredStarId = useConstellationStore(s => s.hoveredStarId);
   const selectedStarId = useConstellationStore(s => s.selectedStarId);
+
+  // Set up raycasting
+  const { pointsRef: interactionRef } = useStarInteraction();
+
+  useEffect(() => {
+    if (pointsRef.current && interactionRef) {
+      interactionRef.current = pointsRef.current;
+    }
+  }, [interactionRef]);
 
   // Create geometry from stars
   const { geometry, starIndex } = useMemo(() => {
@@ -112,7 +123,8 @@ export default function EndpointStar({ stars }) {
     }
   });
 
-  return <points geometry={geometry} material={material} ref={materialRef} />;
+  return <points ref={pointsRef} geometry={geometry} material={material} />;
 }
+
 
 
