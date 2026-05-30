@@ -1,11 +1,16 @@
 import { useRef, useState } from 'react';
 import { useOpenAPIParser } from '../../hooks/useOpenAPIParser';
+import { useConstellationStore } from '../../store';
 import './dropzone.css';
 
 export default function DropZone() {
   const { parseAndLoad } = useOpenAPIParser();
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+  const stars = useConstellationStore(s => s.stars);
+
+  // Hide dropzone if stars are loaded
+  const isLoaded = stars.length > 0;
 
   const handleDragOver = e => {
     e.preventDefault();
@@ -60,6 +65,10 @@ export default function DropZone() {
     }
   };
 
+  if (isLoaded) {
+    return null;
+  }
+
   return (
     <div className="dropzone-overlay">
       <div
@@ -92,4 +101,5 @@ export default function DropZone() {
     </div>
   );
 }
+
 
