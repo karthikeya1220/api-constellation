@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { BufferGeometry, Float32BufferAttribute, LineBasicMaterial } from 'three';
 import { Text } from '@react-three/drei';
 import { useConstellationStore, useFilteredStars } from '../../store';
@@ -13,8 +13,8 @@ export default function Constellation() {
     return new Set(filteredStars.map(s => s.id));
   }, [filteredStars]);
 
-  // Create line geometries for each constellation
-  const constellationLines = useMemo(() => {
+  // Create line geometries and materials ONCE when data changes
+  const constellationGeometries = useMemo(() => {
     if (!constellations || constellations.length === 0) return [];
 
     return constellations.map(group => {
@@ -42,14 +42,11 @@ export default function Constellation() {
       const g = parseInt(colorHex.slice(3, 5), 16) / 255;
       const b = parseInt(colorHex.slice(5, 7), 16) / 255;
 
-      // Check if any star in this group is filtered
-      const anyStarVisible = groupStars.some(star => filteredStarIds.has(star.id));
-
       const material = new LineBasicMaterial({
         color: (r << 16) | (g << 8) | b,
         linewidth: 1,
         transparent: true,
-        opacity: anyStarVisible ? 0.25 : 0.05,
+        opacity: 0.25,
         depthWrite: false,
       });
 
@@ -60,43 +57,54 @@ export default function Constellation() {
         centroid: group.centroid,
         label: group.label,
         color: group.color,
-        anyStarVisible,
+        groupStars,
       };
+    }).filter(Boolean);
+  }, [constellations, stars]);
+
+  // Compute visibility map for text and material opacity
+  const visibleMap = useMemo(() => {
+    const map = {};
+    constellationGeometries.forEach(line => {
+      map[line.id] = line.groupStars.some(star => filteredStarIds.has(star.id));
     });
-  }, [constellations, stars, filteredStarIds]);
+    return map;
+  }, [constellationGeometries, filteredStarIds]);
+
+  // Update material opacity directly to avoid re-rendering meshes when not needed
+  useEffect(() => {
+    constellationGeometries.forEach(line => {
+      line.material.opacity = visibleMap[line.id] ? 0.25 : 0.05;
+      line.material.needsUpdate = true;
+    });
+  }, [constellationGeometries, visibleMap]);
 
   return (
     <group>
       {/* Constellation lines */}
-      {constellationLines.map(line => {
-        if (!line) return null;
-        return (
-          <lineSegments
-            key={`lines-${line.id}`}
-            geometry={line.geometry}
-            material={line.material}
-          />
-        );
-      })}
+      {constellationGeometries.map(line => (
+        <lineSegments
+          key={`lines-${line.id}`}
+          geometry={line.geometry}
+          material={line.material}
+        />
+      ))}
 
       {/* Constellation labels */}
-      {constellationLines.map(line => {
-        if (!line) return null;
-        return (
-          <Text
-            key={`label-${line.id}`}
-            position={[line.centroid.x, line.centroid.y, line.centroid.z]}
-            fontSize={1.5}
-            color={line.color}
-            anchorX="center"
-            anchorY="middle"
-            maxWidth={20}
-            opacity={line.anyStarVisible ? 0.5 : 0.1}
-          >
-            {line.label}
-          </Text>
-        );
-      })}
+      {constellationGeometries.map(line => (
+        <Text
+          key={`label-${line.id}`}
+          position={[line.centroid.x, line.centroid.y, line.centroid.z]}
+          fontSize={1.5}
+          color={line.color}
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={20}
+          opacity={visibleMap[line.id] ? 0.5 : 0.1}
+        >
+          {line.label}
+        </Text>
+      ))}
     </group>
   );
 }
