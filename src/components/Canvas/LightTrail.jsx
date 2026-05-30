@@ -15,7 +15,7 @@ void main() {
 
 export default function LightTrail() {
   const stars = useConstellationStore(s => s.stars);
-  const materialRef = useRef(null);
+  const meshRefs = useRef([]);
 
   // Generate trails between related endpoints
   const trails = useMemo(() => {
@@ -94,7 +94,7 @@ export default function LightTrail() {
       fragmentShader: trailFrag,
       uniforms: {
         uTime: { value: 0 },
-        uColor: { value: { x: 0.4, y: 0.7, z: 1.0 } },
+        uColor: { value: new Vector3(0.4, 0.7, 1.0) },
         uSpeed: { value: 3.0 },
         uDensity: { value: 3.0 },
       },
@@ -106,19 +106,23 @@ export default function LightTrail() {
 
   // Animate time uniform
   useFrame(({ clock }) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = clock.elapsedTime;
-    }
+    meshRefs.current.forEach(meshRef => {
+      if (meshRef && meshRef.material) {
+        meshRef.material.uniforms.uTime.value = clock.elapsedTime;
+      }
+    });
   });
 
   return (
     <group>
-      {trails.map(trail => (
+      {trails.map((trail, idx) => (
         <mesh
           key={trail.id}
           geometry={trail.geometry}
           material={material}
-          ref={materialRef}
+          ref={(el) => {
+            if (el) meshRefs.current[idx] = el;
+          }}
           userData={{ color: trail.color }}
         />
       ))}

@@ -8,7 +8,8 @@ const STARFIELD_COUNT = 2000;
 const STARFIELD_RADIUS = 300;
 
 export default function StarField() {
-  const materialRef = useRef(null);
+  const pointsRef = useRef(null);
+  const groupRef = useRef(null);
 
   const geometry = useMemo(() => {
     const geo = new BufferGeometry();
@@ -82,19 +83,14 @@ export default function StarField() {
       },
       transparent: true,
       depthWrite: false,
-      sizeAttenuation: true,
     });
   }, []);
 
-  useFrame(({ clock }) => {
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = clock.elapsedTime;
-    }
-  });
-
   // Subtle slow rotation of the background field
-  const groupRef = useRef(null);
   useFrame(({ clock }) => {
+    if (pointsRef.current && pointsRef.current.material) {
+      pointsRef.current.material.uniforms.uTime.value = clock.elapsedTime;
+    }
     if (groupRef.current) {
       groupRef.current.rotation.z = clock.elapsedTime * 0.005;
     }
@@ -102,7 +98,7 @@ export default function StarField() {
 
   return (
     <group ref={groupRef}>
-      <points geometry={geometry} material={material} ref={materialRef} />
+      <points ref={pointsRef} geometry={geometry} material={material} />
     </group>
   );
 }

@@ -86,7 +86,6 @@ export default function EndpointStar({ stars }) {
       },
       transparent: true,
       depthWrite: false,
-      sizeAttenuation: true,
     });
   }, []);
 
