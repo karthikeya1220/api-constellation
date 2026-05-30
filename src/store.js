@@ -56,3 +56,32 @@ export const useConstellationStore = create(set => ({
   setLoading: isLoading => set({ isLoading }),
 }));
 
+// Computed selector for filtered stars
+export const useFilteredStars = () => {
+  const stars = useConstellationStore(s => s.stars);
+  const activeMethodFilters = useConstellationStore(s => s.activeMethodFilters);
+  const searchQuery = useConstellationStore(s => s.searchQuery);
+
+  return stars.filter(star => {
+    // Filter by method
+    if (!activeMethodFilters.has(star.method)) {
+      return false;
+    }
+
+    // Filter by search query
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      const matchPath = star.path.toLowerCase().includes(query);
+      const matchSummary = (star.summary || '').toLowerCase().includes(query);
+      const matchDescription = (star.description || '').toLowerCase().includes(query);
+      const matchMethod = star.method.toLowerCase().includes(query);
+
+      if (!matchPath && !matchSummary && !matchDescription && !matchMethod) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+};
+

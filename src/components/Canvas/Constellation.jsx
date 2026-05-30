@@ -1,11 +1,17 @@
 import { useMemo } from 'react';
 import { BufferGeometry, Float32BufferAttribute, LineBasicMaterial } from 'three';
 import { Text } from '@react-three/drei';
-import { useConstellationStore } from '../../store';
+import { useConstellationStore, useFilteredStars } from '../../store';
 
 export default function Constellation() {
   const constellations = useConstellationStore(s => s.constellations);
   const stars = useConstellationStore(s => s.stars);
+  const filteredStars = useFilteredStars();
+
+  // Create set of filtered star IDs for O(1) lookup
+  const filteredStarIds = useMemo(() => {
+    return new Set(filteredStars.map(s => s.id));
+  }, [filteredStars]);
 
   // Create line geometries for each constellation
   const constellationLines = useMemo(() => {
@@ -36,11 +42,14 @@ export default function Constellation() {
       const g = parseInt(colorHex.slice(3, 5), 16) / 255;
       const b = parseInt(colorHex.slice(5, 7), 16) / 255;
 
+      // Check if any star in this group is filtered
+      const anyStarVisible = groupStars.some(star => filteredStarIds.has(star.id));
+
       const material = new LineBasicMaterial({
         color: (r << 16) | (g << 8) | b,
         linewidth: 1,
         transparent: true,
-        opacity: 0.25,
+        opacity: anyStarVisible ? 0.25 : 0.05,
         depthWrite: false,
       });
 
@@ -51,9 +60,10 @@ export default function Constellation() {
         centroid: group.centroid,
         label: group.label,
         color: group.color,
+        anyStarVisible,
       };
     });
-  }, [constellations, stars]);
+  }, [constellations, stars, filteredStarIds]);
 
   return (
     <group>
@@ -81,6 +91,7 @@ export default function Constellation() {
             anchorX="center"
             anchorY="middle"
             maxWidth={20}
+            opacity={line.anyStarVisible ? 0.5 : 0.1}
           >
             {line.label}
           </Text>

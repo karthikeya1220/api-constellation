@@ -3,7 +3,7 @@ import { BufferGeometry, Float32BufferAttribute, ShaderMaterial } from 'three';
 import { useFrame } from '@react-three/fiber';
 import starVert from '../../shaders/star.vert?raw';
 import starFrag from '../../shaders/star.frag?raw';
-import { useConstellationStore } from '../../store';
+import { useConstellationStore, useFilteredStars } from '../../store';
 import { useStarInteraction } from '../../hooks/useStarInteraction';
 
 export default function EndpointStar({ stars }) {
@@ -11,6 +11,7 @@ export default function EndpointStar({ stars }) {
   const pointsRef = useRef(null);
   const hoveredStarId = useConstellationStore(s => s.hoveredStarId);
   const selectedStarId = useConstellationStore(s => s.selectedStarId);
+  const filteredStars = useFilteredStars();
 
   // Set up raycasting
   const { pointsRef: interactionRef } = useStarInteraction();
@@ -115,6 +116,22 @@ export default function EndpointStar({ stars }) {
     hoveredAttr.needsUpdate = true;
     selectedAttr.needsUpdate = true;
   }, [hoveredStarId, selectedStarId, geometry, starIndex]);
+
+  // Update filter state based on search/method filters
+  useEffect(() => {
+    const filteredAttr = geometry.attributes.aIsFiltered;
+    if (!filteredAttr) return;
+
+    // Create set of filtered star IDs for O(1) lookup
+    const filteredStarIds = new Set(filteredStars.map(s => s.id));
+
+    // Update buffer
+    stars.forEach((star, i) => {
+      filteredAttr.array[i] = filteredStarIds.has(star.id) ? 1.0 : 0.0;
+    });
+
+    filteredAttr.needsUpdate = true;
+  }, [filteredStars, stars, geometry]);
 
   // Animate time uniform
   useFrame(({ clock }) => {
