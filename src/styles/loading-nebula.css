@@ -1,0 +1,115 @@
+.loading-nebula {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 10, 26, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  backdrop-filter: blur(4px);
+}
+
+.nebula-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.nebula-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: nebula-pulse 3s ease-in-out infinite;
+}
+
+.nebula-1 {
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(74, 158, 255, 0.6), transparent);
+  animation-delay: 0s;
+}
+
+.nebula-2 {
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(123, 104, 238, 0.5), transparent);
+  animation-delay: 0.4s;
+}
+
+.nebula-3 {
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle, rgba(255, 105, 180, 0.5), transparent);
+  animation-delay: 0.8s;
+}
+
+@keyframes nebula-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+.nebula-text {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 2px;
+  animation: nebula-text-fade 2s ease-in-out infinite;
+  text-align: center;
+  top: 50%;
+  transform: translateY(60px);
+  white-space: nowrap;
+}
+
+@keyframes nebula-text-fade {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .nebula-container {
+    width: 150px;
+    height: 150px;
+  }
+
+  .nebula-orb {
+    filter: blur(30px);
+  }
+
+  .nebula-1 {
+    width: 120px;
+    height: 120px;
+  }
+
+  .nebula-2 {
+    width: 90px;
+    height: 90px;
+  }
+
+  .nebula-3 {
+    width: 60px;
+    height: 60px;
+  }
+
+  .nebula-text {
+    font-size: 0.95rem;
+    transform: translateY(50px);
+  }
+}
